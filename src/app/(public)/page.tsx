@@ -4,13 +4,7 @@ import { HeroDesktopContent, HeroMobileContent, HeroDesktopSpiral, HeroMobileSpi
 import Aurora from '@/components/ui/aurora'
 import { ArrowDown } from 'lucide-react'
 import { getSpiralWineImages } from '@/lib/data/products'
-
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000'
-
-function buildWhatsAppUrl(productTitle: string, customMessage?: string | null) {
-  const text = customMessage || `¡Hola! Me interesa encargar el diseño personalizado de: "${productTitle}". ¿Podrían darme más información?`
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`
-}
+import { buildWhatsAppLink } from '@/lib/whatsapp'
 
 export default async function HomePage() {
   // Colección base de botellas (1 a 5) + fotos de etiquetas marcadas con "mostrar_en_espiral"
@@ -116,7 +110,11 @@ export default async function HomePage() {
         <div className="max-w-7xl w-full mx-auto my-auto grid grid-cols-2 gap-12 items-center">
 
           {/* COLUMNA 1: SICA / ESTUDIO (Animado con Framer Motion) */}
-          <HeroDesktopContent whatsappUrl={buildWhatsAppUrl('Consulta General')} />
+          <HeroDesktopContent
+            whatsappUrl={buildWhatsAppLink(
+              '¡Hola SicaEstudio! Estuve viendo su página principal y me gustaría consultar para encargar un diseño personalizado.'
+            )}
+          />
 
           {/* COLUMNA 2: INFINITE SPIRAL 3D (Animado entrando desde la derecha) */}
           <HeroDesktopSpiral className="relative flex flex-col items-center justify-center w-full max-w-xl mx-auto px-4">

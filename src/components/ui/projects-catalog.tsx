@@ -16,15 +16,17 @@ import {
   X,
 } from 'lucide-react';
 import type { Categoria, ProductoConMedia } from '@/types';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000';
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 type SortOrder = 'default' | 'asc' | 'desc';
 
-function buildWhatsAppUrl(productTitle: string) {
-  const text = `¡Hola! Me interesa encargar el diseño de: "${productTitle}". ¿Me podrían asesorar?`;
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+function buildWhatsAppUrl(productTitle: string, categoryName?: string | null) {
+  const text = categoryName
+    ? `¡Hola SicaEstudio! Vi el proyecto "${productTitle}" (${categoryName}) y quisiera consultar para encargar un diseño similar.`
+    : `¡Hola SicaEstudio! Vi el proyecto "${productTitle}" y quisiera consultar para encargarlo.`;
+  return buildWhatsAppLink(text);
 }
 
 interface ProjectsCatalogProps {
@@ -337,7 +339,7 @@ export default function ProjectsCatalog({
                       </div>
 
                       <a
-                        href={buildWhatsAppUrl(product.nombre)}
+                        href={buildWhatsAppUrl(product.nombre, product.categorias?.nombre)}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
@@ -498,7 +500,7 @@ export default function ProjectsCatalog({
                       </div>
 
                       <a
-                        href={buildWhatsAppUrl(selectedProduct.nombre)}
+                        href={buildWhatsAppUrl(selectedProduct.nombre, selectedProduct.categorias?.nombre)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 w-full py-3 px-5 rounded-full bg-[#1C1917] hover:bg-[#292524] text-[#FAF7F0] font-medium text-sm transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg"

@@ -6,9 +6,11 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Menu, X, ChevronRight, MessageCircle } from 'lucide-react'
+import { buildWhatsAppLink } from '@/lib/whatsapp'
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000'
-const WHATSAPP_CONTACT_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('¡Hola! Me gustaría hacer una consulta sobre los diseños personalizados de SicaEstudio.')}`
+const WHATSAPP_CONTACT_URL = buildWhatsAppLink(
+  '¡Hola SicaEstudio! Me gustaría hacer una consulta sobre sus diseños personalizados.'
+)
 
 const NAV_LINKS = [
   { href: '/etiquetas-vinos', label: 'Etiquetas de Vinos' },

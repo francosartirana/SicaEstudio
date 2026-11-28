@@ -15,8 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000';
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 export interface AlbumEdition {
@@ -252,9 +252,7 @@ export default function AlbumsShowcase({
     whatsappMessage:
       '¡Hola! Quiero consultar por un Álbum de Figuritas Personalizado en SicaEstudio.',
   };
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    currentEdition.whatsappMessage
-  )}`;
+  const whatsappUrl = buildWhatsAppLink(currentEdition.whatsappMessage);
 
   const handleSelectEdition = useCallback(
     (idx: number) => {

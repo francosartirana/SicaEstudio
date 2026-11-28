@@ -15,8 +15,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import DepthCarousel, { DepthCarouselItem } from '@/components/ui/depth-carousel';
-
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
@@ -74,9 +73,7 @@ export default function WineGalleryCarousel({ bottles = [] }: WineGalleryCarouse
     whatsappMessage:
       '¡Hola! Estuve viendo la sección de Etiquetas de Vinos en SicaEstudio y quisiera consultar por un diseño personalizado.',
   };
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    currentBottle.whatsappMessage
-  )}`;
+  const whatsappUrl = buildWhatsAppLink(currentBottle.whatsappMessage);
 
   const resetZoom = useCallback(() => {
     setZoomScale(1);

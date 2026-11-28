@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 
 // Dynamic import with ssr: false ensures Canvas and WebGL only run client-side
 const ModelViewer = dynamic(() => import('@/components/ui/model-viewer'), {
@@ -39,7 +40,6 @@ const ModelViewer = dynamic(() => import('@/components/ui/model-viewer'), {
   ),
 });
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000';
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 // Configuración de los diseños disponibles para la botella 3D
@@ -191,7 +191,7 @@ export default function WineBottleViewer({ showBackLink = true }: WineBottleView
     setDesignIndex((prev) => (prev + 1) % DESIGNS.length);
   };
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(currentDesign.whatsappMessage)}`;
+  const whatsappUrl = buildWhatsAppLink(currentDesign.whatsappMessage);
 
   return (
     <div className="w-full relative flex flex-col justify-center space-y-2.5 sm:space-y-4 lg:space-y-6">

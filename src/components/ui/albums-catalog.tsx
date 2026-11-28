@@ -4,13 +4,14 @@ import Image from 'next/image';
 import { motion, useReducedMotion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import type { ProductoConMedia } from '@/types';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000';
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
 function buildWhatsAppUrl(productTitle: string) {
-  const text = `¡Hola! Me interesa encargar el diseño de: "${productTitle}". ¿Me podrían asesorar?`;
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+  return buildWhatsAppLink(
+    `¡Hola SicaEstudio! Me interesa encargar el álbum "${productTitle}". ¿Me podrían asesorar con los detalles y plazos?`
+  );
 }
 
 interface AlbumsCatalogProps {

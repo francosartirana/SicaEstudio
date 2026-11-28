@@ -6,11 +6,14 @@ import { ArrowLeft, ArrowRight, MessageCircle, RotateCcw } from 'lucide-react';
 import ScrollExpand from '@/components/ui/scroll-expand';
 import Grainient from '@/components/ui/grainient';
 import QuestionMarksParallax from '@/components/home/question-marks-parallax';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000';
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  '¡Hola! Estuve viendo cómo trabajan en su web y quisiera consultar por un pedido personalizado.'
-)}`;
+const WHATSAPP_STEP2_URL = buildWhatsAppLink(
+  '¡Hola SicaEstudio! Estuve viendo el Paso 02 de su metodología y quiero contarles mi idea para un diseño personalizado.'
+);
+const WHATSAPP_STEP5_URL = buildWhatsAppLink(
+  '¡Hola SicaEstudio! Estuve viendo cómo trabajan y quiero iniciar mi pedido personalizado para coordinar diseño y entrega en Rosario.'
+);
 
 interface OrderStep {
   number: string;
@@ -39,7 +42,7 @@ const ORDER_STEPS: OrderStep[] = [
     description:
       'Contactanos vía WhatsApp, contándonos tu idea, proyecto o lo que tengas en mente.',
     actionLabel: 'Escribinos por WhatsApp',
-    actionHref: WHATSAPP_URL,
+    actionHref: WHATSAPP_STEP2_URL,
     isExternal: true,
   },
   {
@@ -61,7 +64,7 @@ const ORDER_STEPS: OrderStep[] = [
     description:
       'Dentro de los plazos de entrega, te avisamos cuando esté listo tu producto, ¡y coordinamos retiro o entrega dentro de Rosario!',
     actionLabel: 'Iniciar mi pedido por WhatsApp',
-    actionHref: WHATSAPP_URL,
+    actionHref: WHATSAPP_STEP5_URL,
     isExternal: true,
   },
 ];
