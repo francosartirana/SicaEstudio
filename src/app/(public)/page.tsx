@@ -1,7 +1,9 @@
 import InfiniteSpiral from '@/components/ui/infinite-spiral'
 import HowWeWorkSection from '@/components/home/how-we-work-section'
 import { HeroDesktopContent, HeroMobileContent, HeroDesktopSpiral, HeroMobileSpiral } from '@/components/home/hero-animated'
+import Aurora from '@/components/ui/aurora'
 import { ArrowDown } from 'lucide-react'
+import { getSpiralWineImages } from '@/lib/data/products'
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000'
 
@@ -11,28 +13,49 @@ function buildWhatsAppUrl(productTitle: string, customMessage?: string | null) {
 }
 
 export default async function HomePage() {
-  // Colección de botellas de autor (1 a 5) para el Infinite Spiral
-  const bottleImages = [
-    '/botella1.jpg',
-    '/botella2.jpg',
-    '/botella3.jpg',
-    '/botella4.jpg',
-    '/botella5.jpg',
+  // Colección base de botellas (1 a 5) + fotos de etiquetas marcadas con "mostrar_en_espiral"
+  const baseBottles = [
+    { src: '/botella1.jpg', alt: 'Diseño personalizado SicaEstudio 1' },
+    { src: '/botella2.jpg', alt: 'Diseño personalizado SicaEstudio 2' },
+    { src: '/botella3.jpg', alt: 'Diseño personalizado SicaEstudio 3' },
+    { src: '/botella4.jpg', alt: 'Diseño personalizado SicaEstudio 4' },
+    { src: '/botella5.jpg', alt: 'Diseño personalizado SicaEstudio 5' },
   ]
-  const spiralItems = Array.from({ length: 15 }).map((_, index) => ({
-    id: `bottle-card-${index}`,
-    src: bottleImages[index % bottleImages.length],
-    alt: `Diseño personalizado SicaEstudio ${(index % bottleImages.length) + 1}`,
-  }))
+  const extraSpiralBottles = await getSpiralWineImages()
+  const allSpiralSources = [...baseBottles, ...extraSpiralBottles]
+  const totalSlots = Math.max(15, allSpiralSources.length)
+
+  const spiralItems = Array.from({ length: totalSlots }).map((_, index) => {
+    const source = allSpiralSources[index % allSpiralSources.length]
+    return {
+      id: `bottle-card-${index}`,
+      src: source.src,
+      alt: source.alt,
+    }
+  })
 
   return (
     <div className="flex flex-col bg-[#F6F3EC]">
-      
+
       {/* =========================================================================
-          1. HERO EN MOBILE (lg:hidden) - 100dvh con nombre centrado, slogan y botón flotante
+          1. HERO EN MOBILE (lg:hidden) - 100dvh con fondo Aurora + nombre centrado
          ========================================================================= */}
       <section className="lg:hidden relative w-full h-[100dvh] flex flex-col items-center justify-center text-center px-4 overflow-hidden bg-[#F6F3EC]">
-        <HeroMobileContent />
+        <Aurora
+          colorStops={['#F0D79E', '#9AA484', '#DDC385']}
+          amplitude={1.05}
+          blend={0.58}
+          speed={0.75}
+          opacity={0.62}
+          className="absolute inset-0 w-full h-full z-0"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-[#F6F3EC] z-[1]"
+        />
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
+          <HeroMobileContent />
+        </div>
       </section>
 
       {/* =========================================================================
@@ -91,7 +114,7 @@ export default async function HomePage() {
       <section className="hidden lg:flex relative w-full min-h-[100dvh] flex-col justify-between pt-36 lg:pt-40 pb-12 px-6 lg:px-8 overflow-hidden bg-[#F6F3EC]">
         {/* Contenido Central Dividido en Dos Columnas */}
         <div className="max-w-7xl w-full mx-auto my-auto grid grid-cols-2 gap-12 items-center">
-          
+
           {/* COLUMNA 1: SICA / ESTUDIO (Animado con Framer Motion) */}
           <HeroDesktopContent whatsappUrl={buildWhatsAppUrl('Consulta General')} />
 

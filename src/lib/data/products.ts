@@ -1,97 +1,183 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { isSupabaseConfigured } from '@/lib/supabase/utils'
-import type { Product } from '@/types'
+import type { Categoria, MediaItem, ProductoConMedia } from '@/types'
 
-export const DEMO_PRODUCTS: Product[] = [
-  {
-    id: 'demo-1',
-    title: 'Etiqueta Gran Reserva Malbec',
-    description: 'Diseño elegante con acabados en dorado metalizado, relieve y papel texturado para botellas premium.',
-    category: 'etiquetas-vinos',
-    image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80',
-    created_at: '2026-01-15T12:00:00Z',
-  },
-  {
-    id: 'demo-2',
-    title: 'Etiqueta Espumante Celebración',
-    description: 'Etiqueta moderna con tintas holográficas e ilustraciones personalizadas para eventos y bodas.',
-    category: 'etiquetas-vinos',
-    image_url: 'https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?auto=format&fit=crop&w=800&q=80',
-    created_at: '2026-02-10T15:30:00Z',
-  },
-  {
-    id: 'demo-3',
-    title: 'Álbum Coleccionable Mundial & Recuerdos',
-    description: 'Álbum de fotos familiar estilo figuritas con paquetes de cromos autoadhesivos brillantes.',
-    category: 'albumes-figuritas',
-    image_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
-    created_at: '2026-02-20T18:00:00Z',
-  },
-  {
-    id: 'demo-4',
-    title: 'Álbum Infantil Aventuras Mágicas',
-    description: 'Álbum de 24 páginas personalizado con la historia e ilustraciones para cumpleaños infantiles.',
-    category: 'albumes-figuritas',
-    image_url: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80',
-    created_at: '2026-03-01T10:00:00Z',
-  },
-  {
-    id: 'demo-5',
-    title: 'Tarjetas Corporativas Soft Touch & Oro',
-    description: 'Papelería de alta gama con laminado mate aterciopelado, despuntes y foil dorado.',
-    category: 'tarjetas-empresariales',
-    image_url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80',
-    created_at: '2026-03-12T14:15:00Z',
-  },
-  {
-    id: 'demo-6',
-    title: 'Tarjetas Minimalistas con QR Conectado',
-    description: 'Tarjetas de presentación en papel reciclado kraft con código QR a tu portafolio o contacto directo.',
-    category: 'tarjetas-empresariales',
-    image_url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
-    created_at: '2026-03-15T09:45:00Z',
-  },
-]
+function sortMediaAsc(media: MediaItem[] | null | undefined): MediaItem[] {
+  if (!media || media.length === 0) return []
+  return [...media].sort((a, b) => a.orden - b.orden)
+}
 
-export async function getProducts(category?: string): Promise<Product[]> {
-  const isAllProjects = !category || category === 'proyectos'
+function normalizeProductos(
+  rows: unknown[] | null | undefined,
+  options?: { preferGalleryOnlyForAlbums?: boolean }
+): ProductoConMedia[] {
+  if (!rows) return []
+  return (rows as ProductoConMedia[]).map((row) => {
+    let sorted = sortMediaAsc(row.media)
+    if (
+      options?.preferGalleryOnlyForAlbums &&
+      row.categorias?.slug === 'albumes-figuritas'
+    ) {
+      const galleryOnly = sorted.filter((m) => m.rol !== 'PRESENTACION')
+      if (galleryOnly.length > 0) {
+        sorted = galleryOnly
+      }
+    }
+    return {
+      ...row,
+      media: sorted,
+    }
+  })
+}
 
-  // Si Supabase no está configurado aún con claves válidas, devuelve los datos de demostración al instante
-  if (!isSupabaseConfigured()) {
-    if (isAllProjects) return DEMO_PRODUCTS
-    return DEMO_PRODUCTS.filter((p) => p.category === category)
+export const getCategories = cache(async (): Promise<Categoria[]> => {
+  if (!isSupabaseConfigured()) return []
+
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('categorias')
+      .select('*')
+      .order('id', { ascending: true })
+
+    if (error || !data) return []
+    return data
+  } catch (err) {
+    console.warn('Error al obtener las categorías desde Supabase:', err)
+    return []
   }
+})
+
+export async function getCategoryBySlug(slug: string): Promise<Categoria | null> {
+  const categories = await getCategories()
+  return categories.find((cat) => cat.slug === slug) ?? null
+}
+
+/**
+ * Obtiene productos con su categoría y su galería `media` ordenada ascendentemente por `orden`.
+ */
+export async function getProducts(categorySlug?: string): Promise<ProductoConMedia[]> {
+  const isAllProjects = !categorySlug || categorySlug === 'proyectos'
+
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = await createClient()
 
-    let query = supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (!isAllProjects) {
-      query = query.eq('category', category)
-    }
-
-    // Usamos Promise.race con timeout de 3 segundos para evitar que la página quede colgada si hay problemas de red
     const timeoutPromise = new Promise<{ data: null; error: Error }>((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout de consulta Supabase')), 3000)
+      setTimeout(() => reject(new Error('Timeout de consulta Supabase')), 3500)
     )
 
+    if (isAllProjects) {
+      const query = supabase
+        .from('productos')
+        .select('*, categorias(*), media(*)')
+        .order('creado_en', { ascending: false })
+        .order('orden', { referencedTable: 'media', ascending: true })
+
+      const result = (await Promise.race([query, timeoutPromise])) as {
+        data: unknown[] | null
+        error: unknown
+      }
+
+      return normalizeProductos(result.data, { preferGalleryOnlyForAlbums: true })
+    }
+
+    const query = supabase
+      .from('productos')
+      .select('*, categorias!inner(*), media(*)')
+      .eq('categorias.slug', categorySlug)
+      .order('creado_en', { ascending: false })
+      .order('orden', { referencedTable: 'media', ascending: true })
+
     const result = (await Promise.race([query, timeoutPromise])) as {
-      data: Product[] | null
+      data: unknown[] | null
       error: unknown
     }
 
-    if (result.data && result.data.length > 0) {
-      return result.data
-    }
-
-    // Si la tabla está vacía o hubo error, retornamos demo para que la UI no quede vacía mientras se prueba
-    return category ? DEMO_PRODUCTS.filter((p) => p.category === category) : DEMO_PRODUCTS
+    return normalizeProductos(result.data, { preferGalleryOnlyForAlbums: true })
   } catch (err) {
-    console.warn('Aviso: No se pudo conectar a Supabase, utilizando datos de muestra:', err)
-    return category ? DEMO_PRODUCTS.filter((p) => p.category === category) : DEMO_PRODUCTS
+    console.warn('Error al conectar con Supabase:', err)
+    return []
+  }
+}
+
+/**
+ * Etiquetas de vinos marcadas con `mostrar_en_espiral = true` para el InfiniteSpiral del Hero.
+ */
+export async function getSpiralWineImages(): Promise<{ src: string; alt: string }[]> {
+  if (!isSupabaseConfigured()) return []
+
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('productos')
+      .select('*, categorias!inner(*), media(*)')
+      .eq('categorias.slug', 'etiquetas-vinos')
+      .eq('mostrar_en_espiral', true)
+      .order('creado_en', { ascending: false })
+      .order('orden', { referencedTable: 'media', ascending: true })
+
+    if (error || !data) return []
+
+    return normalizeProductos(data)
+      .map((prod) => {
+        const firstImage = prod.media.find((m) => m.tipo === 'IMAGEN')
+        if (!firstImage) return null
+        return {
+          src: firstImage.url,
+          alt: firstImage.alt_text || prod.nombre,
+        }
+      })
+      .filter((item): item is { src: string; alt: string } => item !== null)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Etiquetas de vinos marcadas con `mostrar_en_galeria = true` para la galería de Etiquetas de Vinos.
+ */
+export async function getGalleryWineProducts(): Promise<ProductoConMedia[]> {
+  if (!isSupabaseConfigured()) return []
+
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('productos')
+      .select('*, categorias!inner(*), media(*)')
+      .eq('categorias.slug', 'etiquetas-vinos')
+      .eq('mostrar_en_galeria', true)
+      .order('creado_en', { ascending: false })
+      .order('orden', { referencedTable: 'media', ascending: true })
+
+    if (error || !data) return []
+    return normalizeProductos(data)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Álbumes marcados con `mostrar_en_seccion = true` para mostrar su video de presentación en AlbumsShowcase.
+ */
+export async function getShowcaseAlbums(): Promise<ProductoConMedia[]> {
+  if (!isSupabaseConfigured()) return []
+
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('productos')
+      .select('*, categorias!inner(*), media(*)')
+      .eq('categorias.slug', 'albumes-figuritas')
+      .eq('mostrar_en_seccion', true)
+      .order('creado_en', { ascending: false })
+      .order('orden', { referencedTable: 'media', ascending: true })
+
+    if (error || !data) return []
+    return normalizeProductos(data)
+  } catch {
+    return []
   }
 }

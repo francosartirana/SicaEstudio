@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,75 +25,20 @@ export interface WineBottleItem {
   image: string;
   alt: string;
   title: string;
-  variety?: string;
   description: string;
   whatsappMessage: string;
 }
 
-export const WINE_BOTTLES: WineBottleItem[] = [
-  {
-    id: 'botella-1',
-    image: '/botella1.jpg',
-    alt: 'Botella de autor 1 - Malbec Roble Reserva',
-    title: 'Reserva de Autor • Alma de Roble',
-    variety: 'Vino Tinto • Malbec Roble 2024',
-    description:
-      'Diseño integral de etiqueta con ilustración botánica grabada en oro mate sobre papel martillado texturado. Su tipografía de autor y acabados con stamping en caliente evocan distinción artesanal y carácter único.',
-    whatsappMessage:
-      '¡Hola! Vi el diseño de la Botella 1 (Alma de Roble • Malbec) en la galería de etiquetas de vinos de SicaEstudio y quisiera consultar por un presupuesto personalizado.',
-  },
-  {
-    id: 'botella-2',
-    image: '/botella2.jpg',
-    alt: 'Botella de autor 2 - Chenin Blanco Dulce',
-    title: 'Brisa Dorada • Chenin Blanco Dulce',
-    variety: 'Vino Blanco • Cosecha Tardía',
-    description:
-      'Etiqueta panorámica diseñada para abrazar la luminosidad y el color dorado natural del vino blanco. Destaca por sus acabados en stamping plata sobre papel satinado perlado y cápsula metálica a tono.',
-    whatsappMessage:
-      '¡Hola! Me interesó el diseño de la Botella 2 (Brisa Dorada • Chenin Blanco) de la galería de etiquetas. ¿Podrían brindarme información para encargar?',
-  },
-  {
-    id: 'botella-3',
-    image: '/botella3.jpg',
-    alt: 'Botella de autor 3 - Gran Blend Legado',
-    title: 'Legado Familiar • Gran Blend',
-    variety: 'Blend de Autor • Cabernet - Syrah',
-    description:
-      'Diseño solemne y emotivo con escudo y monograma de linaje familiar. Impreso con técnicas de bajorrelieve profundo sobre papel verjurado en tono crema antiguo con simulación de lacre artesanal.',
-    whatsappMessage:
-      '¡Hola! Me gustaría cotizar un diseño personalizado como el de la Botella 3 (Legado Familiar) para un festejo de cumpleaños familiar.',
-  },
-  {
-    id: 'botella-4',
-    image: '/botella4.jpg',
-    alt: 'Botella de autor 4 - Edición Noir Noche Negra',
-    title: 'Edición Mística • Noche Negra',
-    variety: 'Vino Tinto • Petit Verdot Estibado',
-    description:
-      'Estética audaz y temperamental sobre botella de vidrio oscuro casi reflectivo. Etiqueta con corazón ardiente entre cadenas, tipografía dorada en alta definición y contraste dramático entre sombras y reflejos.',
-    whatsappMessage:
-      '¡Hola! Quisiera encargar un diseño para festejo con el estilo de la Botella 4 (Noche Negra • Vino Tinto) de SicaEstudio.',
-  },
-  {
-    id: 'botella-5',
-    image: '/botella5.jpg',
-    alt: 'Botella de autor 5 - Destello Rosé Espumante',
-    title: 'Destello Rosé • Cuvée Celebración',
-    variety: 'Espumante / Rosé Brut Nature',
-    description:
-      'Fusión de vanguardia y elegancia con película holográfica reflectiva y relieve táctil. Diseñada para copas alzadas, eventos memorables y brindis que merecen quedar inmortalizados.',
-    whatsappMessage:
-      '¡Hola! Me encantó la propuesta de la Botella 5 (Destello Rosé / Espumante) para un brindis especial. ¿Cómo es el proceso para encargar el diseño?',
-  },
-];
+interface WineGalleryCarouselProps {
+  bottles?: WineBottleItem[];
+}
 
-const CAROUSEL_ITEMS: DepthCarouselItem[] = WINE_BOTTLES.map((bottle) => ({
-  image: bottle.image,
-  alt: bottle.alt,
-}));
+export default function WineGalleryCarousel({ bottles = [] }: WineGalleryCarouselProps) {
+  const carouselItems = useMemo<DepthCarouselItem[]>(
+    () => bottles.map((bottle) => ({ image: bottle.image, alt: bottle.alt })),
+    [bottles]
+  );
 
-export default function WineGalleryCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
@@ -119,7 +64,16 @@ export default function WineGalleryCarousel() {
   const cardWidth = isMobile ? 185 : isLargeDesktop ? 350 : 315;
   const cardHeight = isMobile ? 265 : isLargeDesktop ? 515 : 465;
 
-  const currentBottle = WINE_BOTTLES[activeIndex] || WINE_BOTTLES[0];
+  const currentBottle = bottles[activeIndex] || bottles[0] || {
+    id: 'empty',
+    image: '',
+    alt: '',
+    title: 'Colección de Etiquetas de Autor',
+    description:
+      'Todavía no hay etiquetas cargadas con la opción "Mostrar en galería". Podés explorar nuestros modelos en el visualizador 3D.',
+    whatsappMessage:
+      '¡Hola! Estuve viendo la sección de Etiquetas de Vinos en SicaEstudio y quisiera consultar por un diseño personalizado.',
+  };
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     currentBottle.whatsappMessage
   )}`;
@@ -133,10 +87,10 @@ export default function WineGalleryCarousel() {
   // Cambiar imagen dentro del Lightbox
   const handleSelectImage = useCallback((idx: number) => {
     setActiveIndex(idx);
-    const item = CAROUSEL_ITEMS[idx];
+    const item = carouselItems[idx];
     setLightboxImage(typeof item === 'string' ? item : item.image);
     resetZoom();
-  }, [resetZoom]);
+  }, [carouselItems, resetZoom]);
 
   // Bloquear scroll de la página cuando la imagen grande está abierta
   useEffect(() => {
@@ -163,10 +117,10 @@ export default function WineGalleryCarousel() {
           setLightboxImage(null);
         }
       } else if (e.key === 'ArrowLeft') {
-        const newIdx = (activeIndex - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length;
+        const newIdx = (activeIndex - 1 + carouselItems.length) % carouselItems.length;
         handleSelectImage(newIdx);
       } else if (e.key === 'ArrowRight') {
-        const newIdx = (activeIndex + 1) % CAROUSEL_ITEMS.length;
+        const newIdx = (activeIndex + 1) % carouselItems.length;
         handleSelectImage(newIdx);
       } else if (e.key === '+' || e.key === '=') {
         setZoomScale((prev) => Math.min(prev + 0.4, 3.5));
@@ -294,11 +248,6 @@ export default function WineGalleryCarousel() {
                   <h1 className="font-serif text-[1.55rem] sm:text-3xl font-bold text-[#1C1917] tracking-tight leading-[1.15] [text-wrap:balance]">
                     {currentBottle.title}
                   </h1>
-                  {currentBottle.variety && (
-                    <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-[#A18417]">
-                      {currentBottle.variety}
-                    </p>
-                  )}
                 </motion.div>
               </AnimatePresence>
             </motion.div>
@@ -310,7 +259,7 @@ export default function WineGalleryCarousel() {
               transition={{ duration: 0.75, ease: EASE_OUT }}
               className="hidden lg:flex lg:col-span-5 flex-col justify-center order-1 min-w-0 lg:-translate-y-7 xl:-translate-y-9"
             >
-              {/* Volver a la vidriera - Estático (no se re-anima ni parpadea al cambiar botella) */}
+              {/* Volver a la vidriera y Eyebrow - Estáticos (no se re-animan al cambiar botella) */}
               <Link
                 href="/"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#78716C] hover:text-[#1C1917] transition w-fit group mb-5 select-none"
@@ -319,7 +268,11 @@ export default function WineGalleryCarousel() {
                 Volver a la Vidriera Principal
               </Link>
 
-              {/* Información dinámica de la botella (Animada con Framer Motion) */}
+              <span className="text-sm font-semibold tracking-widest uppercase text-[#846C12] mb-2 block text-left">
+                Colección de Etiquetas de Autor
+              </span>
+
+              {/* Información dinámica de la botella: solo título y descripción */}
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={currentBottle.id}
@@ -332,49 +285,38 @@ export default function WineGalleryCarousel() {
                   }}
                   className="space-y-5 text-left"
                 >
-                  {/* Eyebrow de categoría y título de la botella */}
-                  <div className="space-y-1.5">
-                    <span className="text-sm font-semibold tracking-widest uppercase text-[#846C12]">
-                      Colección de Etiquetas de Autor
-                    </span>
-                    <h1 className="font-serif text-4xl xl:text-5xl font-bold text-[#1C1917] tracking-tight leading-tight [text-wrap:balance]">
-                      {currentBottle.title}
-                    </h1>
-                    {currentBottle.variety && (
-                      <p className="text-sm font-semibold uppercase tracking-wider text-[#A18417]">
-                        {currentBottle.variety}
-                      </p>
-                    )}
-                  </div>
+                  <h1 className="font-serif text-4xl xl:text-5xl font-bold text-[#1C1917] tracking-tight leading-tight [text-wrap:balance]">
+                    {currentBottle.title}
+                  </h1>
 
                   {/* Descripción de autor */}
                   <p className="text-[#57534E] text-lg leading-relaxed [text-wrap:pretty] max-w-xl">
                     {currentBottle.description}
                   </p>
-
-                  {/* Acciones: Consultar por WhatsApp y Bajar al Modelo 3D */}
-                  <div className="flex items-center gap-3.5 flex-wrap pt-2">
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#1C1917] hover:bg-[#292524] text-white font-medium text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] min-h-[44px]"
-                    >
-                      <MessageCircle className="w-4 h-4 text-[#DDC385]" />
-                      <span>Consultar por este diseño</span>
-                    </a>
-
-                    <a
-                      href="#vista-3d"
-                      className="inline-flex items-center justify-center gap-1.5 px-5 py-3.5 rounded-full border border-[#E8DECF] bg-white/80 hover:bg-[#F5EFE6] text-[#57534E] hover:text-[#1C1917] text-sm font-medium transition-all duration-200 shadow-2xs min-h-[44px]"
-                      title="Bajar al Visualizador 3D"
-                    >
-                      <span>Visualizador 3D</span>
-                      <ArrowDown className="w-3.5 h-3.5 text-[#A18417]" />
-                    </a>
-                  </div>
                 </motion.div>
               </AnimatePresence>
+
+              {/* Acciones estáticas: Consultar por WhatsApp y Bajar al Modelo 3D */}
+              <div className="flex items-center gap-3.5 flex-wrap pt-7">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#1C1917] hover:bg-[#292524] text-white font-medium text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98] min-h-[44px]"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#DDC385]" />
+                  <span>Consultar por este diseño</span>
+                </a>
+
+                <a
+                  href="#vista-3d"
+                  className="inline-flex items-center justify-center gap-1.5 px-5 py-3.5 rounded-full border border-[#E8DECF] bg-white/80 hover:bg-[#F5EFE6] text-[#57534E] hover:text-[#1C1917] text-sm font-medium transition-all duration-200 shadow-2xs min-h-[44px]"
+                  title="Bajar al Visualizador 3D"
+                >
+                  <span>Visualizador 3D</span>
+                  <ArrowDown className="w-3.5 h-3.5 text-[#A18417]" />
+                </a>
+              </div>
             </motion.div>
 
             {/* CENTRO EN MOBILE / DERECHA EN DESKTOP: DEPTH CAROUSEL (ReactBits) */}
@@ -384,30 +326,41 @@ export default function WineGalleryCarousel() {
               transition={{ delay: 0.15, duration: 0.85, ease: EASE_OUT }}
               className="lg:col-span-7 flex flex-col items-center justify-center relative w-full h-[315px] sm:h-[360px] lg:h-[620px] xl:h-[660px] max-h-[700px] min-h-[300px] lg:min-h-[480px] order-2 lg:order-2"
             >
-              <DepthCarousel
-                items={CAROUSEL_ITEMS}
-                activeIndex={activeIndex}
-                onChange={(idx) => setActiveIndex(idx)}
-                onItemClick={(_, item) => {
-                  setLightboxImage(item.image);
-                  resetZoom();
-                }}
-                cardWidth={cardWidth}
-                cardHeight={cardHeight}
-                radius={24}
-                tint="rgba(28, 25, 23, 0.45)"
-                depth={isMobile ? 110 : 200}
-                spread={isMobile ? 48 : 100}
-                tilt={16}
-                tiltDirection="right"
-                perspective={1300}
-                visibleCards={3}
-                controlsPosition="bottom"
-                showControls={true}
-                showIndicators={true}
-                enableWheel={false}
-                className="h-full w-full"
-              />
+              {carouselItems.length > 0 ? (
+                <DepthCarousel
+                  items={carouselItems}
+                  activeIndex={activeIndex}
+                  onChange={(idx) => setActiveIndex(idx)}
+                  onItemClick={(_, item) => {
+                    setLightboxImage(item.image);
+                    resetZoom();
+                  }}
+                  cardWidth={cardWidth}
+                  cardHeight={cardHeight}
+                  radius={24}
+                  tint="rgba(28, 25, 23, 0.45)"
+                  depth={isMobile ? 110 : 200}
+                  spread={isMobile ? 48 : 100}
+                  tilt={16}
+                  tiltDirection="right"
+                  perspective={1300}
+                  visibleCards={3}
+                  controlsPosition="bottom"
+                  showControls={true}
+                  showIndicators={true}
+                  enableWheel={false}
+                  className="h-full w-full"
+                />
+              ) : (
+                <div className="px-8 py-12 rounded-3xl border border-dashed border-[#E8DECF] bg-white/60 text-center max-w-sm">
+                  <p className="font-serif text-base font-semibold text-[#1C1917]">
+                    Galería vacía
+                  </p>
+                  <p className="text-xs text-[#78716C] mt-1.5 leading-relaxed">
+                    Subí etiquetas en el panel admin con &ldquo;Mostrar en galería&rdquo; activado para verlas acá.
+                  </p>
+                </div>
+              )}
             </motion.div>
 
             {/* MOBILE BOTTOM (< lg): Descripción equilibrada + Acciones en zona del pulgar */}
@@ -537,13 +490,13 @@ export default function WineGalleryCarousel() {
             </button>
 
             {/* Flechas de navegación para alternar de imagen en tamaño grande */}
-            {CAROUSEL_ITEMS.length > 1 && (
+            {carouselItems.length > 1 && (
               <>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const newIdx = (activeIndex - 1 + CAROUSEL_ITEMS.length) % CAROUSEL_ITEMS.length;
+                    const newIdx = (activeIndex - 1 + carouselItems.length) % carouselItems.length;
                     handleSelectImage(newIdx);
                   }}
                   className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer backdrop-blur-xs shadow-lg"
@@ -557,7 +510,7 @@ export default function WineGalleryCarousel() {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const newIdx = (activeIndex + 1) % CAROUSEL_ITEMS.length;
+                    const newIdx = (activeIndex + 1) % carouselItems.length;
                     handleSelectImage(newIdx);
                   }}
                   className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer backdrop-blur-xs shadow-lg"

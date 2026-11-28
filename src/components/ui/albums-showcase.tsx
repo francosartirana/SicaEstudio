@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
@@ -19,7 +19,7 @@ import {
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491100000000';
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 
-interface AlbumEdition {
+export interface AlbumEdition {
   id: string;
   label: string;
   title: string;
@@ -28,31 +28,6 @@ interface AlbumEdition {
   videoSrc: string;
   whatsappMessage: string;
 }
-
-const ALBUM_EDITIONS: AlbumEdition[] = [
-  {
-    id: 'album-1',
-    label: 'Edición 01',
-    title: 'Álbum Coleccionable • Clásico',
-    subtitle: 'Tapa personalizada · Figuritas autoadhesivas',
-    description:
-      'Recorré página por página un álbum pensado para atesorar momentos inolvidables: impresión de alta definición, papel de alto gramaje y figuritas listas para pegar.',
-    videoSrc: '/videoAlbum.mp4',
-    whatsappMessage:
-      '¡Hola! Vi el primer video del Álbum de Figuritas Personalizado (Edición 01) en SicaEstudio y quisiera consultar para encargar uno.',
-  },
-  {
-    id: 'album-2',
-    label: 'Edición 02',
-    title: 'Álbum Temático • Diseño a Medida',
-    subtitle: 'Identidad 100% propia · Sobres sellados',
-    description:
-      'Cada cubierta, página interior y sobre coleccionable se diseña desde cero según la historia, festejo o equipo que quieras celebrar.',
-    videoSrc: '/VideoAlbum2.mp4',
-    whatsappMessage:
-      '¡Hola! Vi el segundo video del Álbum de Figuritas Personalizado (Edición 02) en SicaEstudio y me gustaría consultar por un diseño a medida.',
-  },
-];
 
 interface VideoFrameProps {
   edition: AlbumEdition;
@@ -255,14 +230,28 @@ function AlbumVideoFrame({
   );
 }
 
-export default function AlbumsShowcase() {
+export default function AlbumsShowcase({
+  editions = [],
+}: {
+  editions?: AlbumEdition[];
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const lightboxVideoRef = useRef<HTMLVideoElement | null>(null);
   const prefersReducedMotion = Boolean(useReducedMotion());
 
-  const currentEdition = ALBUM_EDITIONS[activeIndex];
+  const currentEdition = editions[activeIndex] || editions[0] || {
+    id: 'empty',
+    label: 'Álbumes',
+    title: 'Álbumes de Figuritas Personalizados',
+    subtitle: 'Ediciones a medida',
+    description:
+      'Todavía no hay videos de presentación cargados con la opción "Mostrar en sección".',
+    videoSrc: '',
+    whatsappMessage:
+      '¡Hola! Quiero consultar por un Álbum de Figuritas Personalizado en SicaEstudio.',
+  };
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     currentEdition.whatsappMessage
   )}`;
@@ -303,11 +292,11 @@ export default function AlbumsShowcase() {
       if (e.key === 'Escape') {
         setLightboxIndex(null);
       } else if (e.key === 'ArrowLeft') {
-        const prev = (lightboxIndex - 1 + ALBUM_EDITIONS.length) % ALBUM_EDITIONS.length;
+        const prev = (lightboxIndex - 1 + editions.length) % editions.length;
         setLightboxIndex(prev);
         handleSelectEdition(prev);
       } else if (e.key === 'ArrowRight') {
-        const next = (lightboxIndex + 1) % ALBUM_EDITIONS.length;
+        const next = (lightboxIndex + 1) % editions.length;
         setLightboxIndex(next);
         handleSelectEdition(next);
       } else if (e.key === ' ') {
@@ -379,7 +368,7 @@ export default function AlbumsShowcase() {
               aria-label="Seleccionar video de álbum"
               className="inline-flex self-start p-1 rounded-full bg-[#F5EFE6] border border-[#E8DECF] gap-1"
             >
-              {ALBUM_EDITIONS.map((item, idx) => {
+              {editions.map((item, idx) => {
                 const selected = activeIndex === idx;
                 return (
                   <button
@@ -457,7 +446,7 @@ export default function AlbumsShowcase() {
                 aria-label="Seleccionar edición de álbum"
                 className="inline-flex self-start p-1 rounded-full bg-[#F5EFE6] border border-[#E8DECF] gap-1"
               >
-                {ALBUM_EDITIONS.map((item, idx) => {
+                {editions.map((item, idx) => {
                   const selected = activeIndex === idx;
                   return (
                     <button
@@ -510,48 +499,64 @@ export default function AlbumsShowcase() {
             {/* Mobile (< lg): Reproductor vertical 9:16 único y equilibrado */}
             <div className="lg:hidden w-full flex justify-center">
               <div className="w-[202px] sm:w-[238px]">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={currentEdition.id}
-                    initial={
-                      prefersReducedMotion
-                        ? false
-                        : { opacity: 0, x: direction * 28, scale: 0.97 }
-                    }
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={
-                      prefersReducedMotion
-                        ? undefined
-                        : { opacity: 0, x: -direction * 28, scale: 0.97 }
-                    }
-                    transition={{ duration: 0.35, ease: EASE_OUT }}
-                  >
-                    <AlbumVideoFrame
-                      edition={currentEdition}
-                      isActive={lightboxIndex === null}
-                      onExpand={() => setLightboxIndex(activeIndex)}
-                      reducedMotion={prefersReducedMotion}
-                      priorityLoad={true}
-                    />
-                  </motion.div>
-                </AnimatePresence>
+                {editions.length > 0 ? (
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                      key={currentEdition.id}
+                      initial={
+                        prefersReducedMotion
+                          ? false
+                          : { opacity: 0, x: direction * 28, scale: 0.97 }
+                      }
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={
+                        prefersReducedMotion
+                          ? undefined
+                          : { opacity: 0, x: -direction * 28, scale: 0.97 }
+                      }
+                      transition={{ duration: 0.35, ease: EASE_OUT }}
+                    >
+                      <AlbumVideoFrame
+                        edition={currentEdition}
+                        isActive={lightboxIndex === null}
+                        onExpand={() => setLightboxIndex(activeIndex)}
+                        reducedMotion={prefersReducedMotion}
+                        priorityLoad={true}
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+                ) : (
+                  <div className="aspect-[9/16] rounded-[26px] border border-dashed border-[#E8DECF] bg-white/60 flex items-center justify-center p-6 text-center">
+                    <p className="text-xs text-[#78716C]">
+                      Sin video de presentación cargado aún.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Desktop (lg+): Ambos reels 9:16 minimalistas lado a lado */}
-            <div className="hidden lg:grid grid-cols-2 gap-6 xl:gap-8 w-full max-w-[600px] xl:max-w-[650px] items-center">
-              {ALBUM_EDITIONS.map((edition, idx) => (
-                <AlbumVideoFrame
-                  key={edition.id}
-                  edition={edition}
-                  isActive={activeIndex === idx && lightboxIndex === null}
-                  onActivate={() => handleSelectEdition(idx)}
-                  onExpand={() => setLightboxIndex(idx)}
-                  reducedMotion={prefersReducedMotion}
-                  priorityLoad={idx === 0}
-                />
-              ))}
-            </div>
+            {/* Desktop (lg+): Reels 9:16 minimalistas lado a lado */}
+            {editions.length > 0 ? (
+              <div className="hidden lg:grid grid-cols-2 gap-6 xl:gap-8 w-full max-w-[600px] xl:max-w-[650px] items-center">
+                {editions.map((edition, idx) => (
+                  <AlbumVideoFrame
+                    key={edition.id}
+                    edition={edition}
+                    isActive={activeIndex === idx && lightboxIndex === null}
+                    onActivate={() => handleSelectEdition(idx)}
+                    onExpand={() => setLightboxIndex(idx)}
+                    reducedMotion={prefersReducedMotion}
+                    priorityLoad={idx === 0}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="hidden lg:flex w-full max-w-[460px] aspect-[9/10] rounded-3xl border border-dashed border-[#E8DECF] bg-white/60 items-center justify-center p-8 text-center">
+                <p className="text-sm text-[#78716C]">
+                  Subí un álbum en el panel admin con &ldquo;Mostrar en sección&rdquo; activado para mostrar su video de presentación acá.
+                </p>
+              </div>
+            )}
           </motion.div>
 
           {/* =================================================================
@@ -600,7 +605,7 @@ export default function AlbumsShowcase() {
             onClick={() => setLightboxIndex(null)}
             role="dialog"
             aria-modal="true"
-            aria-label={`Reproducción ampliada: ${ALBUM_EDITIONS[lightboxIndex].title}`}
+            aria-label={`Reproducción ampliada: ${editions[lightboxIndex].title}`}
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/92 backdrop-blur-md p-4 sm:p-6 md:p-10 cursor-zoom-out"
           >
             {/* Indicador superior de edición */}
@@ -609,11 +614,11 @@ export default function AlbumsShowcase() {
               className="absolute top-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-md px-4 py-1.5 text-white shadow-lg border border-white/10 select-none pointer-events-auto"
             >
               <span className="text-xs font-semibold tracking-wider uppercase text-[#DDC385]">
-                {ALBUM_EDITIONS[lightboxIndex].label}
+                {editions[lightboxIndex].label}
               </span>
               <span className="text-white/40">•</span>
               <span className="text-xs text-white/85 tabular-nums">
-                {lightboxIndex + 1} de {ALBUM_EDITIONS.length}
+                {lightboxIndex + 1} de {editions.length}
               </span>
             </div>
 
@@ -629,13 +634,13 @@ export default function AlbumsShowcase() {
             </button>
 
             {/* Flechas para cambiar entre videos sin cerrar el Lightbox */}
-            {ALBUM_EDITIONS.length > 1 && (
+            {editions.length > 1 && (
               <>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const prev = (lightboxIndex - 1 + ALBUM_EDITIONS.length) % ALBUM_EDITIONS.length;
+                    const prev = (lightboxIndex - 1 + editions.length) % editions.length;
                     setLightboxIndex(prev);
                     handleSelectEdition(prev);
                   }}
@@ -649,7 +654,7 @@ export default function AlbumsShowcase() {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const next = (lightboxIndex + 1) % ALBUM_EDITIONS.length;
+                    const next = (lightboxIndex + 1) % editions.length;
                     setLightboxIndex(next);
                     handleSelectEdition(next);
                   }}
@@ -663,7 +668,7 @@ export default function AlbumsShowcase() {
 
             {/* Reproductor vertical 9:16 ampliado */}
             <motion.div
-              key={ALBUM_EDITIONS[lightboxIndex].id}
+              key={editions[lightboxIndex].id}
               initial={prefersReducedMotion ? false : { scale: 0.94, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={prefersReducedMotion ? undefined : { scale: 0.94, opacity: 0 }}
@@ -673,7 +678,7 @@ export default function AlbumsShowcase() {
             >
               <video
                 ref={lightboxVideoRef}
-                src={ALBUM_EDITIONS[lightboxIndex].videoSrc}
+                src={editions[lightboxIndex].videoSrc}
                 width={720}
                 height={1280}
                 controls
@@ -681,7 +686,7 @@ export default function AlbumsShowcase() {
                 loop
                 playsInline
                 preload="auto"
-                aria-label={ALBUM_EDITIONS[lightboxIndex].title}
+                aria-label={editions[lightboxIndex].title}
                 className="w-full h-full object-contain bg-black"
               />
             </motion.div>

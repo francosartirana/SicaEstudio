@@ -149,7 +149,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
 
     const targetOffsetPx =
       clampedIdx === 0
-        ? stageH * (expandDist + holdDist * 0.85)
+        ? stageH * (expandDist + holdDist * 0.5)
         : stageH * (expandDist + holdDist + horizDist * (clampedIdx / panels));
 
     if (c.useWindowScroll) {
@@ -180,7 +180,8 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
 
     const pos = totalP * activeTotal;
     const expandP = clamp(pos / expandDist, 0, 1);
-    const horizP = horizDist > 0 ? clamp((pos - expandDist - holdDist) / horizDist, 0, 1) : 0;
+    const rawHorizP = horizDist > 0 ? clamp((pos - expandDist - holdDist) / horizDist, 0, 1) : 0;
+    const horizP = rawHorizP < 0.001 ? 0 : rawHorizP;
 
     const e = smoothstep(0, 1, expandP);
 

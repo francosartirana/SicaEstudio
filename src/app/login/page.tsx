@@ -9,10 +9,15 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') || '/admin'
+  const queryError = searchParams.get('error')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(
+    queryError === 'supabase_not_configured'
+      ? 'Supabase no está configurado en .env.local. Agregá NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY.'
+      : null
+  )
   const [loading, setLoading] = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
@@ -22,17 +27,17 @@ function LoginForm() {
 
     const supabase = createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     })
 
     if (signInError) {
-      setError(signInError.message || 'Error al iniciar sesión')
+      setError(signInError.message || 'Credenciales inválidas. Verificá tu correo y contraseña.')
       setLoading(false)
       return
     }
 
-    router.push(redirectTo)
+    router.replace(redirectTo)
     router.refresh()
   }
 

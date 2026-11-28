@@ -18,6 +18,9 @@
 
   --color-sica-terracotta: #8C533E;
   --color-sica-olive: #5A6347;
+  --color-sica-olive-dark: #3F4730;
+  --color-sica-olive-soft: #75805E;
+  --color-sica-olive-light: #9AA484;
   --color-sica-noir: #1C1917;
   --color-sica-muted: #57534E;
 
@@ -28,6 +31,7 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -55,4 +59,17 @@ h1, h2, h3, .font-display {
 }
 html.sica-intro-active .sica-intro-overlay {
   display: block;
+}
+
+/* Native <dialog> modal scroll containment (modern-web-guidance) */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: none;
+  pointer-events: auto;
+  background-color: rgba(28, 25, 23, 0.55);
+  backdrop-filter: blur(4px);
 }

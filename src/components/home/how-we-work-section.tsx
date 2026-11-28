@@ -71,25 +71,30 @@ export default function HowWeWorkSection() {
   const [activePanel, setActivePanel] = useState(0); // 0 = Intro, 1..5 = Pasos
 
   const renderOverlayHeader = (scrollToPanel: (index: number) => void) => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-22 sm:pt-28 pb-2.5 flex items-center justify-between gap-2 text-xs sm:text-sm">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-22 sm:pt-28 pb-2.5 flex items-center justify-between gap-2 text-xs sm:text-sm min-h-[122px] sm:min-h-[146px]">
       <span className="text-[#846C12] font-semibold tracking-[0.2em] uppercase text-[11px] sm:text-xs">
         <span className="sm:hidden">Metodología</span>
         <span className="hidden sm:inline">Metodología SicaEstudio</span>
       </span>
 
-      <div className="flex items-center gap-2.5 sm:gap-3">
-        {activePanel > 0 && (
-          <button
-            type="button"
-            onClick={() => scrollToPanel(0)}
-            aria-label="Volver al inicio de la metodología"
-            title="Volver a Descubrí nuestra metodología"
-            className="pointer-events-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#E8DECF] bg-white/85 backdrop-blur-md hover:bg-[#FAF7F0] hover:border-[#DDC385] text-[11px] font-medium text-[#1C1917] shadow-2xs transition-all duration-200 active:scale-95 cursor-pointer select-none"
-          >
-            <RotateCcw className="w-3 h-3 text-[#A18417]" />
-            <span>Inicio</span>
-          </button>
-        )}
+      <div className="flex items-center gap-2.5 sm:gap-3 h-7">
+        <button
+          type="button"
+          onClick={() => scrollToPanel(0)}
+          disabled={activePanel === 0}
+          aria-hidden={activePanel === 0}
+          tabIndex={activePanel === 0 ? -1 : 0}
+          aria-label="Volver al inicio de la metodología"
+          title="Volver a Descubrí nuestra metodología"
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#E8DECF] bg-white/85 backdrop-blur-md hover:bg-[#FAF7F0] hover:border-[#DDC385] text-[11px] font-medium text-[#1C1917] shadow-2xs transition-all duration-200 active:scale-95 select-none ${
+            activePanel > 0
+              ? 'opacity-100 pointer-events-auto cursor-pointer'
+              : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <RotateCcw className="w-3 h-3 text-[#A18417]" />
+          <span>Inicio</span>
+        </button>
 
         <span className="text-[#57534E] text-xs font-medium tracking-wider uppercase tabular-nums">
           {activePanel === 0 ? (

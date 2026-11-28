@@ -50,6 +50,16 @@ export function Navbar() {
           {/* Logo Isotipo */}
           <Link
             href="/"
+            onClick={(e) => {
+              setIsOpen(false)
+              if (pathname === '/') {
+                e.preventDefault()
+                if (window.location.hash) {
+                  window.history.replaceState(null, '', '/')
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }
+            }}
             className="flex items-center group relative z-10 p-1"
             title="SicaEstudio - Inicio"
           >

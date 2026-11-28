@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import type { Database } from '@/types/database'
 import { isSupabaseConfigured } from './utils'
 
 export async function updateSession(request: NextRequest) {
@@ -10,7 +11,7 @@ export async function updateSession(request: NextRequest) {
   const isAccessingAdmin = request.nextUrl.pathname.startsWith('/admin')
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
 
-  // Si Supabase aún no está configurado en .env.local, permitimos ver /login o advertimos
+  // Si Supabase aún no está configurado en .env.local, bloqueamos /admin y advertimos en /login
   if (!isSupabaseConfigured()) {
     if (isAccessingAdmin) {
       const url = request.nextUrl.clone()
@@ -21,7 +22,7 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -42,12 +43,12 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Obtiene el usuario autenticado
+  // Refresca y valida la sesión en el servidor de Supabase Auth
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirigir a /login si intenta acceder a rutas /admin sin sesión activa
+  // Redirigir a /login si intenta acceder a rutas /admin sin sesión válida
   if (!user && isAccessingAdmin) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
